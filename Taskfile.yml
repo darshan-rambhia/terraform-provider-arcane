@@ -1,0 +1,110 @@
+version: '3'
+
+vars:
+  HOSTNAME: registry.terraform.io
+  NAMESPACE: darshan-rambhia
+  NAME: arcane
+  BINARY: terraform-provider-{{.NAME}}
+  VERSION: 0.1.0
+  OS_ARCH:
+    sh: echo "$(go env GOOS)_$(go env GOARCH)"
+  BUILD_DIR: ./dist
+  INSTALL_DIR: ~/.terraform.d/plugins/{{.HOSTNAME}}/{{.NAMESPACE}}/{{.NAME}}/{{.VERSION}}/{{.OS_ARCH}}
+
+tasks:
+  default:
+    desc: Build the provider
+    cmds:
+      - task: build
+
+  build:
+    desc: Build the provider binary
+    deps: [lint]
+    cmds:
+      - go build -o {{.BUILD_DIR}}/{{.BINARY}}
+    sources:
+      - ./**/*.go
+    generates:
+      - "{{.BUILD_DIR}}/{{.BINARY}}"
+
+  install:
+    desc: Install provider locally for testing
+    deps: [build]
+    cmds:
+      - mkdir -p {{.INSTALL_DIR}}
+      - cp {{.BUILD_DIR}}/{{.BINARY}} {{.INSTALL_DIR}}/{{.BINARY}}
+
+  test:
+    desc: Run all tests
+    env:
+      TF_ACC: "1"
+    cmds:
+      - go test --race -v ./internal/... -timeout 30m
+
+  test:unit:
+    desc: Run unit tests only (no external dependencies)
+    cmds:
+      - go test --race -v -short ./internal/...
+
+  test:coverage:
+    desc: Run tests with coverage and generate HTML report
+    cmds:
+      - mkdir -p coverage
+      - go test --race -short -coverprofile=coverage/coverage.out -covermode=atomic ./internal/...
+      - go tool cover -html=coverage/coverage.out -o coverage/coverage.html
+      - go tool cover -func=coverage/coverage.out | grep total | awk '{print "Total coverage:", $3}'
+      - echo "Coverage report generated at coverage/coverage.html"
+
+  fmt:
+    desc: Format code
+    cmds:
+      - go fmt ./...
+      - terraform fmt -recursive ./examples/ 2>/dev/null || true
+
+  lint:
+    desc: Run golangci-lint to check code quality
+    cmds:
+      - golangci-lint run --timeout=10m ./...
+
+  docs:
+    desc: Generate documentation
+    cmds:
+      - go generate -tags generate ./...
+
+  clean:
+    desc: Clean build artifacts
+    cmds:
+      - rm -rf {{.BUILD_DIR}}
+      - rm -rf {{.INSTALL_DIR}}
+      - rm -rf coverage
+
+  deps:
+    desc: Download and tidy dependencies
+    cmds:
+      - go mod download
+      - go mod tidy
+
+  debug:
+    desc: Run the provider in debug mode
+    deps: [build:debug]
+    cmds:
+      - "{{.BUILD_DIR}}/{{.BINARY}} -debug"
+
+  build:debug:
+    desc: Build with debug symbols
+    cmds:
+      - go build -gcflags="all=-N -l" -o {{.BUILD_DIR}}/{{.BINARY}}
+
+  # Development workflow
+  dev:
+    desc: Build and install for local testing
+    cmds:
+      - task: deps
+      - task: build
+      - task: install
+      - echo "Provider installed to {{.INSTALL_DIR}}"
+
+  release:dry-run:
+    desc: Test goreleaser configuration locally (no publish)
+    cmds:
+      - goreleaser release --snapshot --clean
