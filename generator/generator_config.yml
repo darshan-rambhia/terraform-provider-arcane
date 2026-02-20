@@ -1,0 +1,168 @@
+# Arcane Terraform Provider - Generator Configuration
+#
+# This configuration maps Arcane's OpenAPI spec to Terraform resources and data sources.
+# Used by tfplugingen-openapi to generate the provider spec.
+#
+# See: https://developer.hashicorp.com/terraform/plugin/code-generation/openapi-generator
+
+provider:
+  name: arcane
+
+resources:
+  # Environment resource - represents a Docker daemon connection
+  environment:
+    create:
+      path: /api/environments
+      method: POST
+    read:
+      path: /api/environments/{id}
+      method: GET
+    update:
+      path: /api/environments/{id}
+      method: PUT
+    delete:
+      path: /api/environments/{id}
+      method: DELETE
+    schema:
+      # Attributes to ignore (handled specially or not needed)
+      ignores:
+        - access_token  # Sensitive, only returned on create
+        - created_at
+        - updated_at
+      # Attribute overrides
+      overrides:
+        id:
+          computed_optional_required: computed
+        name:
+          computed_optional_required: required
+        description:
+          computed_optional_required: optional
+        use_api_key:
+          computed_optional_required: optional
+          default:
+            static: false
+
+  # Project deployment resource - manages project lifecycle
+  project_deployment:
+    # Custom resource - not directly mapped to CRUD endpoints
+    create:
+      path: /api/environments/{environment_id}/projects/{project_id}/up
+      method: POST
+    read:
+      path: /api/environments/{environment_id}/projects/{project_id}
+      method: GET
+    update:
+      path: /api/environments/{environment_id}/projects/{project_id}/redeploy
+      method: POST
+    delete:
+      path: /api/environments/{environment_id}/projects/{project_id}/down
+      method: POST
+    schema:
+      attributes:
+        environment_id:
+          computed_optional_required: required
+          plan_modifiers:
+            - requires_replace
+        project_id:
+          computed_optional_required: required
+          plan_modifiers:
+            - requires_replace
+        pull:
+          computed_optional_required: optional
+          default:
+            static: false
+        force_recreate:
+          computed_optional_required: optional
+          default:
+            static: false
+        remove_orphans:
+          computed_optional_required: optional
+          default:
+            static: false
+        status:
+          computed_optional_required: computed
+
+  container_registry:
+    create:
+      path: /api/container-registries
+      method: POST
+    read:
+      path: /api/container-registries/{id}
+      method: GET
+    update:
+      path: /api/container-registries/{id}
+      method: PUT
+    delete:
+      path: /api/container-registries/{id}
+      method: DELETE
+
+  git_repository:
+    create:
+      path: /api/gitops/repositories
+      method: POST
+    read:
+      path: /api/gitops/repositories/{id}
+      method: GET
+    update:
+      path: /api/gitops/repositories/{id}
+      method: PUT
+    delete:
+      path: /api/gitops/repositories/{id}
+      method: DELETE
+
+  gitops_sync:
+    create:
+      path: /api/environments/{environment_id}/gitops-syncs
+      method: POST
+    read:
+      path: /api/environments/{environment_id}/gitops-syncs/{id}
+      method: GET
+    update:
+      path: /api/environments/{environment_id}/gitops-syncs/{id}
+      method: PUT
+    delete:
+      path: /api/environments/{environment_id}/gitops-syncs/{id}
+      method: DELETE
+
+data_sources:
+  # Environment data source - lookup by ID or name
+  environment:
+    read:
+      path: /api/environments/{id}
+      method: GET
+    # Also support lookup by name (via list endpoint + filter)
+    schema:
+      attributes:
+        id:
+          computed_optional_required: optional
+        name:
+          computed_optional_required: optional
+        description:
+          computed_optional_required: computed
+        use_api_key:
+          computed_optional_required: computed
+
+  # Project data source - lookup by ID or name within environment
+  project:
+    read:
+      path: /api/environments/{environment_id}/projects/{id}
+      method: GET
+    schema:
+      attributes:
+        id:
+          computed_optional_required: optional
+        environment_id:
+          computed_optional_required: required
+        name:
+          computed_optional_required: optional
+        status:
+          computed_optional_required: computed
+        path:
+          computed_optional_required: computed
+        services:
+          computed_optional_required: computed
+
+  container:
+    read:
+      path: /api/environments/{environment_id}/containers/{id}
+      method: GET

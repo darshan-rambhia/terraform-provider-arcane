@@ -1,0 +1,10 @@
+provider_installation {
+  # Dev overrides for rapid development (bypasses init for plan/apply)
+  # Update the path to match your local clone of this repository
+  dev_overrides {
+    "darshan-rambhia/arcane" = "/path/to/terraform-provider-arcane/dist"
+  }
+
+  # All other providers from registry
+  direct {}
+}

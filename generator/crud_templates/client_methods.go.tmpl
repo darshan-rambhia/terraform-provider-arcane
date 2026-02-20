@@ -1,0 +1,89 @@
+{{/* Client Methods Template */}}
+{{/* Generates stub client methods for resources */}}
+
+package client
+
+import (
+	"context"
+	"fmt"
+)
+
+// {{.ResourceName}} represents a {{.TypeName}} in Arcane.
+type {{.ResourceName}} struct {
+	ID string `json:"id"`
+	{{range .Attributes}}
+	{{.FieldName}} {{if eq .Type "String"}}string{{else if eq .Type "Int64"}}int64{{else if eq .Type "Bool"}}bool{{else if eq .Type "Float64"}}float64{{end}} `json:"{{.TFName}}"`
+	{{end}}
+}
+
+// {{.ResourceName}}CreateRequest represents the request to create a {{.TypeName}}.
+type {{.ResourceName}}CreateRequest struct {
+	{{range .Attributes}}{{if or .Required .Optional}}
+	{{.FieldName}} {{if eq .Type "String"}}string{{else if eq .Type "Int64"}}int64{{else if eq .Type "Bool"}}bool{{else if eq .Type "Float64"}}float64{{end}} `json:"{{.TFName}}"`
+	{{end}}{{end}}
+}
+
+// {{.ResourceName}}UpdateRequest represents the request to update a {{.TypeName}}.
+type {{.ResourceName}}UpdateRequest struct {
+	{{range .Attributes}}{{if or .Required .Optional}}
+	{{.FieldName}} {{if eq .Type "String"}}string{{else if eq .Type "Int64"}}int64{{else if eq .Type "Bool"}}bool{{else if eq .Type "Float64"}}float64{{end}} `json:"{{.TFName}}"`
+	{{end}}{{end}}
+}
+
+// {{.CreateMethod}} creates a new {{.TypeName}}.
+func (c *Client) {{.CreateMethod}}(ctx context.Context, req *{{.ResourceName}}CreateRequest) (*{{.ResourceName}}, error) {
+	var result {{.ResourceName}}
+	if err := c.Do(ctx, Request{
+		Method: "POST",
+		Path:   "/api/{{.TypeName}}s", // Adjust path as needed
+		Body:   req,
+	}, &result); err != nil {
+		return nil, fmt.Errorf("failed to create {{.TypeName}}: %w", err)
+	}
+	return &result, nil
+}
+
+// {{.ReadMethod}} retrieves a {{.TypeName}} by ID.
+func (c *Client) {{.ReadMethod}}(ctx context.Context, id string) (*{{.ResourceName}}, error) {
+	var result {{.ResourceName}}
+	if err := c.Do(ctx, Request{
+		Method: "GET",
+		Path:   fmt.Sprintf("/api/{{.TypeName}}s/%s", id), // Adjust path as needed
+	}, &result); err != nil {
+		return nil, fmt.Errorf("failed to get {{.TypeName}}: %w", err)
+	}
+	return &result, nil
+}
+
+// {{.UpdateMethod}} updates an existing {{.TypeName}}.
+func (c *Client) {{.UpdateMethod}}(ctx context.Context, id string, req *{{.ResourceName}}UpdateRequest) (*{{.ResourceName}}, error) {
+	var result {{.ResourceName}}
+	if err := c.Do(ctx, Request{
+		Method: "PUT",
+		Path:   fmt.Sprintf("/api/{{.TypeName}}s/%s", id), // Adjust path as needed
+		Body:   req,
+	}, &result); err != nil {
+		return nil, fmt.Errorf("failed to update {{.TypeName}}: %w", err)
+	}
+	return &result, nil
+}
+
+// {{.DeleteMethod}} deletes a {{.TypeName}}.
+func (c *Client) {{.DeleteMethod}}(ctx context.Context, id string) error {
+	if err := c.Do(ctx, Request{
+		Method: "DELETE",
+		Path:   fmt.Sprintf("/api/{{.TypeName}}s/%s", id), // Adjust path as needed
+	}, nil); err != nil {
+		return fmt.Errorf("failed to delete {{.TypeName}}: %w", err)
+	}
+	return nil
+}
+
+// {{.ReadByNameMethod}} retrieves a {{.TypeName}} by name.
+// This is a helper for data sources that support lookup by name.
+func (c *Client) {{.ReadByNameMethod}}(ctx context.Context, name string) (*{{.ResourceName}}, error) {
+	// TODO: Implement name lookup
+	// This typically requires listing all items and filtering by name,
+	// or using a query parameter if the API supports it
+	return nil, fmt.Errorf("{{.ReadByNameMethod}} not yet implemented")
+}

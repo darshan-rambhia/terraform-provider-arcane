@@ -1,0 +1,34 @@
+# Binaries
+terraform-provider-arcane
+dist/
+
+# Test artifacts
+*.test
+coverage.out
+coverage.html
+target/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+
+# Generated spec files (can be regenerated)
+spec/arcane_openapi.json
+spec/provider_spec.json
+
+# Local development
+.env
+.env.local
+.terraformrc

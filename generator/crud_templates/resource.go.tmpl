@@ -1,0 +1,195 @@
+{{/* Resource CRUD Template */}}
+{{/* Variables: .ResourceName, .TypeName, .CreateMethod, .ReadMethod, .UpdateMethod, .DeleteMethod */}}
+
+package provider
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/darshan-rambhia/terraform-provider-arcane/internal/client"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+)
+
+var (
+	_ resource.Resource                = &{{.ResourceName}}Resource{}
+	_ resource.ResourceWithImportState = &{{.ResourceName}}Resource{}
+)
+
+// New{{.ResourceName}}Resource returns a new {{.TypeName}} resource.
+func New{{.ResourceName}}Resource() resource.Resource {
+	return &{{.ResourceName}}Resource{}
+}
+
+// {{.ResourceName}}Resource defines the {{.TypeName}} resource implementation.
+type {{.ResourceName}}Resource struct {
+	client *client.Client
+}
+
+// {{.ResourceName}}ResourceModel describes the {{.TypeName}} resource data model.
+type {{.ResourceName}}ResourceModel struct {
+	ID types.String `tfsdk:"id"`
+	{{range .Attributes}}
+	{{.FieldName}} types.{{.Type}} `tfsdk:"{{.TFName}}"`
+	{{end}}
+}
+
+func (r *{{.ResourceName}}Resource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_{{.TypeName}}"
+}
+
+func (r *{{.ResourceName}}Resource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "{{.Description}}",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The unique identifier of the {{.TypeName}}.",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			{{range .Attributes}}
+			"{{.TFName}}": schema.{{.SchemaType}}Attribute{
+				MarkdownDescription: "{{.Description}}",
+				{{if .Required}}Required: true,{{end}}
+				{{if .Optional}}Optional: true,{{end}}
+				{{if .Computed}}Computed: true,{{end}}
+				{{if .Sensitive}}Sensitive: true,{{end}}
+			},
+			{{end}}
+		},
+	}
+}
+
+func (r *{{.ResourceName}}Resource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+
+	c, ok := req.ProviderData.(*client.Client)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Resource Configure Type",
+			fmt.Sprintf("Expected *client.Client, got: %T", req.ProviderData),
+		)
+		return
+	}
+
+	r.client = c
+}
+
+func (r *{{.ResourceName}}Resource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data {{.ResourceName}}ResourceModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// TODO: Convert data to API request format
+	// Example:
+	// apiReq := &client.{{.ResourceName}}CreateRequest{
+	{{range .Attributes}}{{if .Required}}
+	//   {{.FieldName}}: data.{{.FieldName}}.ValueString(), // or Value{{.Type}}()
+	{{end}}{{end}}
+	// }
+
+	// Call API
+	// result, err := r.client.{{.CreateMethod}}(ctx, apiReq)
+	// if err != nil {
+	// 	resp.Diagnostics.AddError("Failed to create {{.TypeName}}", err.Error())
+	// 	return
+	// }
+
+	// Update state from response
+	// data.ID = types.StringValue(result.ID)
+	{{range .Attributes}}
+	// data.{{.FieldName}} = types.{{.Type}}Value(result.{{.FieldName}})
+	{{end}}
+
+	resp.Diagnostics.AddError("Not Implemented", "Create method for {{.TypeName}} is not yet implemented")
+}
+
+func (r *{{.ResourceName}}Resource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data {{.ResourceName}}ResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// result, err := r.client.{{.ReadMethod}}(ctx, data.ID.ValueString())
+	// if err != nil {
+	// 	if client.IsNotFound(err) {
+	// 		resp.State.RemoveResource(ctx)
+	// 		return
+	// 	}
+	// 	resp.Diagnostics.AddError("Failed to read {{.TypeName}}", err.Error())
+	// 	return
+	// }
+
+	// Update state from response
+	{{range .Attributes}}
+	// data.{{.FieldName}} = types.{{.Type}}Value(result.{{.FieldName}})
+	{{end}}
+
+	resp.Diagnostics.AddError("Not Implemented", "Read method for {{.TypeName}} is not yet implemented")
+}
+
+func (r *{{.ResourceName}}Resource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data {{.ResourceName}}ResourceModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// TODO: Convert data to API update request format
+	// apiReq := &client.{{.ResourceName}}UpdateRequest{
+	{{range .Attributes}}{{if not .Computed}}
+	//   {{.FieldName}}: data.{{.FieldName}}.ValueString(), // or Value{{.Type}}()
+	{{end}}{{end}}
+	// }
+
+	// result, err := r.client.{{.UpdateMethod}}(ctx, data.ID.ValueString(), apiReq)
+	// if err != nil {
+	// 	resp.Diagnostics.AddError("Failed to update {{.TypeName}}", err.Error())
+	// 	return
+	// }
+
+	// Update state from response
+	{{range .Attributes}}
+	// data.{{.FieldName}} = types.{{.Type}}Value(result.{{.FieldName}})
+	{{end}}
+
+	resp.Diagnostics.AddError("Not Implemented", "Update method for {{.TypeName}} is not yet implemented")
+}
+
+func (r *{{.ResourceName}}Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data {{.ResourceName}}ResourceModel
+
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// err := r.client.{{.DeleteMethod}}(ctx, data.ID.ValueString())
+	// if err != nil {
+	// 	if !client.IsNotFound(err) {
+	// 		resp.Diagnostics.AddError("Failed to delete {{.TypeName}}", err.Error())
+	// 		return
+	// 	}
+	// }
+
+	resp.Diagnostics.AddError("Not Implemented", "Delete method for {{.TypeName}} is not yet implemented")
+}
+
+func (r *{{.ResourceName}}Resource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}

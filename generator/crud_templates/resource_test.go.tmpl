@@ -1,0 +1,54 @@
+{{/* Resource Test Template */}}
+{{/* Generates basic test scaffolding for a resource */}}
+
+package provider
+
+import (
+	"fmt"
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+)
+
+func TestAcc{{.ResourceName}}Resource(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create and Read testing
+			{
+				Config: testAcc{{.ResourceName}}ResourceConfig("test-{{.TypeName}}"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("arcane_{{.TypeName}}.test", "id", "test-{{.TypeName}}"),
+					{{range .Attributes}}{{if .Required}}
+					resource.TestCheckResourceAttr("arcane_{{.TypeName}}.test", "{{.TFName}}", "test-value"),
+					{{end}}{{end}}
+				),
+			},
+			// ImportState testing
+			{
+				ResourceName:      "arcane_{{.TypeName}}.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+			// Update and Read testing
+			{
+				Config: testAcc{{.ResourceName}}ResourceConfig("test-{{.TypeName}}-updated"),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("arcane_{{.TypeName}}.test", "id", "test-{{.TypeName}}-updated"),
+				),
+			},
+			// Delete testing automatically occurs in TestCase
+		},
+	})
+}
+
+func testAcc{{.ResourceName}}ResourceConfig(name string) string {
+	return fmt.Sprintf(`
+resource "arcane_{{.TypeName}}" "test" {
+  {{range .Attributes}}{{if .Required}}
+  {{.TFName}} = "%[1]s"
+  {{end}}{{end}}
+}
+`, name)
+}

@@ -1,0 +1,114 @@
+{{/* Data Source Template */}}
+{{/* Variables: .DataSourceName, .TypeName, .ReadMethod */}}
+
+package provider
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/darshan-rambhia/terraform-provider-arcane/internal/client"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+)
+
+var _ datasource.DataSource = &{{.ResourceName}}DataSource{}
+
+// New{{.ResourceName}}DataSource returns a new {{.TypeName}} data source.
+func New{{.ResourceName}}DataSource() datasource.DataSource {
+	return &{{.ResourceName}}DataSource{}
+}
+
+// {{.ResourceName}}DataSource defines the {{.TypeName}} data source implementation.
+type {{.ResourceName}}DataSource struct {
+	client *client.Client
+}
+
+// {{.ResourceName}}DataSourceModel describes the {{.TypeName}} data source data model.
+type {{.ResourceName}}DataSourceModel struct {
+	ID types.String `tfsdk:"id"`
+	{{range .Attributes}}
+	{{.FieldName}} types.{{.Type}} `tfsdk:"{{.TFName}}"`
+	{{end}}
+}
+
+func (d *{{.ResourceName}}DataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_{{.TypeName}}"
+}
+
+func (d *{{.ResourceName}}DataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "{{.Description}}",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The unique identifier of the {{.TypeName}}.",
+				Optional:            true,
+				Computed:            true,
+			},
+			{{range .Attributes}}
+			"{{.TFName}}": schema.{{.SchemaType}}Attribute{
+				MarkdownDescription: "{{.Description}}",
+				{{if .Required}}Required: true,{{end}}
+				{{if .Optional}}Optional: true,{{end}}
+				{{if .Computed}}Computed: true,{{end}}
+			},
+			{{end}}
+		},
+	}
+}
+
+func (d *{{.ResourceName}}DataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+
+	c, ok := req.ProviderData.(*client.Client)
+	if !ok {
+		resp.Diagnostics.AddError(
+			"Unexpected Data Source Configure Type",
+			fmt.Sprintf("Expected *client.Client, got: %T", req.ProviderData),
+		)
+		return
+	}
+
+	d.client = c
+}
+
+func (d *{{.ResourceName}}DataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data {{.ResourceName}}DataSourceModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// var result *client.{{.ResourceName}}
+	// var err error
+
+	// Lookup by ID or Name
+	// if !data.ID.IsNull() {
+	// 	result, err = d.client.{{.ReadMethod}}(ctx, data.ID.ValueString())
+	// } else if !data.Name.IsNull() {
+	// 	result, err = d.client.{{.ReadByNameMethod}}(ctx, data.Name.ValueString())
+	// } else {
+	// 	resp.Diagnostics.AddError(
+	// 		"Missing Required Attribute",
+	// 		"Either 'id' or 'name' must be specified.",
+	// 	)
+	// 	return
+	// }
+
+	// if err != nil {
+	// 	resp.Diagnostics.AddError("Failed to read {{.TypeName}}", err.Error())
+	// 	return
+	// }
+
+	// Update state from response
+	// data.ID = types.StringValue(result.ID)
+	{{range .Attributes}}
+	// data.{{.FieldName}} = types.{{.Type}}Value(result.{{.FieldName}})
+	{{end}}
+
+	resp.Diagnostics.AddError("Not Implemented", "Read method for {{.TypeName}} data source is not yet implemented")
+}
