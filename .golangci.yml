@@ -32,33 +32,34 @@ linters:
     # Too noisy for Terraform provider code
     - exhaustruct
 
-linters-settings:
-  goimports:
-    local-prefixes: github.com/darshan-rambhia/terraform-provider-arcane
+  settings:
+    goimports:
+      local-prefixes: github.com/darshan-rambhia/terraform-provider-arcane
 
-  gosec:
-    excludes:
-      - G107 # URL provided by variable — expected in API client code
+    gosec:
+      excludes:
+        - G107 # URL provided by variable — expected in API client code
 
-  errorlint:
-    errorf: true
-    asserts: true
-    comparison: true
+    errorlint:
+      errorf: true
+      asserts: true
+      comparison: true
 
 issues:
-  exclude-rules:
-    # Test files can be more relaxed
-    - path: _test\.go
-      linters:
-        - gosec
-        - errcheck
-        - unparam
+  exclusions:
+    rules:
+      # Test files can be more relaxed
+      - path: _test\.go
+        linters:
+          - gosec
+          - errcheck
+          - unparam
 
-    # Generated code should not be linted
-    - path: internal/provider/generated/
-      linters:
-        - goimports
-        - gofmt
+      # Generated code should not be linted
+      - path: internal/provider/generated/
+        linters:
+          - goimports
+          - gofmt
 
   max-issues-per-linter: 0
   max-same-issues: 0
