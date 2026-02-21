@@ -15,8 +15,6 @@ linters:
     - unused
 
     # Style & correctness
-    - gofmt
-    - goimports
     - misspell
     - unconvert
     - unparam
@@ -33,9 +31,6 @@ linters:
     - exhaustruct
 
   settings:
-    goimports:
-      local-prefixes: github.com/darshan-rambhia/terraform-provider-arcane
-
     gosec:
       excludes:
         - G107 # URL provided by variable — expected in API client code
@@ -45,7 +40,6 @@ linters:
       asserts: true
       comparison: true
 
-issues:
   exclusions:
     rules:
       # Test files can be more relaxed
@@ -58,8 +52,18 @@ issues:
       # Generated code should not be linted
       - path: internal/provider/generated/
         linters:
-          - goimports
           - gofmt
 
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/darshan-rambhia/terraform-provider-arcane
+
+issues:
   max-issues-per-linter: 0
   max-same-issues: 0
