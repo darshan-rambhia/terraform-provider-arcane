@@ -8,10 +8,9 @@ linters:
   enable:
     # Defaults
     - errcheck
-    - gosimple
     - govet
     - ineffassign
-    - staticcheck
+    - staticcheck  # includes gosimple in v2
     - unused
 
     # Style & correctness
