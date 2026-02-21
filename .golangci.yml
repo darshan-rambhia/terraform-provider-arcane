@@ -48,6 +48,11 @@ linters:
           - errcheck
           - unparam
 
+      # Generator reads files from user-provided paths — expected behavior
+      - path: generator/
+        linters:
+          - gosec
+
       # Generated code should not be linted
       - path: internal/provider/generated/
         linters:

@@ -1171,13 +1171,13 @@ func TestGetContainerByName_ReturnsContainer(t *testing.T) {
 	t.Parallel()
 	callCount := 0
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch {
-		case r.URL.Path == "/api/environments/env-1/projects":
+		switch r.URL.Path {
+		case "/api/environments/env-1/projects":
 			json.NewEncoder(w).Encode(PaginatedResponse[Project]{
 				Success: true,
 				Data:    []Project{{ID: "proj-1", Name: "webapp"}},
 			})
-		case r.URL.Path == "/api/environments/env-1/projects/proj-1/containers":
+		case "/api/environments/env-1/projects/proj-1/containers":
 			callCount++
 			json.NewEncoder(w).Encode(PaginatedResponse[ContainerDetail]{
 				Success: true,
