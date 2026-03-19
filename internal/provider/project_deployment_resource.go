@@ -100,6 +100,17 @@ type ProjectDeploymentResourceModel struct {
 	LastDeployedAt types.String `tfsdk:"last_deployed_at"`
 }
 
+// toDeployRequest converts the HCL attributes to the Arcane v1.16+ API request.
+func (m *ProjectDeploymentResourceModel) toDeployRequest() *client.ProjectDeployRequest {
+	req := &client.ProjectDeployRequest{
+		ForceRecreate: m.ForceRecreate.ValueBool(),
+	}
+	if m.Pull.ValueBool() {
+		req.PullPolicy = "always"
+	}
+	return req
+}
+
 func (r *ProjectDeploymentResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_project_deployment"
 }
@@ -335,15 +346,13 @@ func (r *ProjectDeploymentResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	// Deploy the project
-	deployReq := &client.ProjectDeployRequest{
-		Pull:          data.Pull.ValueBool(),
-		ForceRecreate: data.ForceRecreate.ValueBool(),
-		RemoveOrphans: data.RemoveOrphans.ValueBool(),
-	}
+	deployReq := data.toDeployRequest()
 
-	tflog.Debug(ctx, "Deploying project", map[string]interface{}{
+	tflog.Debug(ctx, "Deploying project (v1.16+ API)", map[string]interface{}{
 		"environment_id": data.EnvironmentID.ValueString(),
 		"project_id":     data.ProjectID.ValueString(),
+		"pull_policy":    deployReq.PullPolicy,
+		"force_recreate": deployReq.ForceRecreate,
 	})
 
 	err := envClient.DeployProject(ctx, data.ProjectID.ValueString(), deployReq)
@@ -407,11 +416,7 @@ func (r *ProjectDeploymentResource) Update(ctx context.Context, req resource.Upd
 	envClient := r.client.ForEnvironment(data.EnvironmentID.ValueString())
 
 	// Redeploy the project
-	deployReq := &client.ProjectDeployRequest{
-		Pull:          data.Pull.ValueBool(),
-		ForceRecreate: data.ForceRecreate.ValueBool(),
-		RemoveOrphans: data.RemoveOrphans.ValueBool(),
-	}
+	deployReq := data.toDeployRequest()
 
 	tflog.Debug(ctx, "Redeploying project", map[string]interface{}{
 		"environment_id": data.EnvironmentID.ValueString(),

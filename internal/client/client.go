@@ -366,13 +366,12 @@ func (ec *EnvironmentClient) GetProjectByName(ctx context.Context, name string) 
 }
 
 // ProjectDeployRequest represents a request to deploy a project.
+// Matches Arcane v1.16+ ProjectDeployOptions schema.
 type ProjectDeployRequest struct {
-	// Pull images before deploying
-	Pull bool `json:"pull,omitempty"`
-	// Force recreate containers
-	ForceRecreate bool `json:"force_recreate,omitempty"`
-	// Remove orphan containers
-	RemoveOrphans bool `json:"remove_orphans,omitempty"`
+	// Pull policy for images (e.g. "always", "missing", "never")
+	PullPolicy string `json:"pullPolicy,omitempty"`
+	// Force recreate containers even if configuration hasn't changed
+	ForceRecreate bool `json:"forceRecreate,omitempty"`
 }
 
 // DeployProject deploys (starts) a project.

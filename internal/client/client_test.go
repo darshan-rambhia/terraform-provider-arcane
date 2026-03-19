@@ -653,8 +653,8 @@ func TestDeployProject_SendsPost(t *testing.T) {
 		}
 		var req ProjectDeployRequest
 		json.NewDecoder(r.Body).Decode(&req)
-		if !req.Pull {
-			t.Error("expected pull=true")
+		if req.PullPolicy != "always" {
+			t.Errorf("expected pullPolicy=always, got %s", req.PullPolicy)
 		}
 		w.WriteHeader(http.StatusOK)
 	}))
@@ -662,7 +662,7 @@ func TestDeployProject_SendsPost(t *testing.T) {
 
 	c := &Client{BaseURL: srv.URL, HTTPClient: srv.Client()}
 	ec := c.ForEnvironment("env-1")
-	err := ec.DeployProject(context.Background(), "proj-1", &ProjectDeployRequest{Pull: true})
+	err := ec.DeployProject(context.Background(), "proj-1", &ProjectDeployRequest{PullPolicy: "always"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
