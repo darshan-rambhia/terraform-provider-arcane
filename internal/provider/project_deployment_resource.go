@@ -413,6 +413,23 @@ func (r *ProjectDeploymentResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
+	// Skip redeploy if no deployment-affecting attributes changed
+	needsRedeploy := !data.Triggers.Equal(state.Triggers) ||
+		!data.Pull.Equal(state.Pull) ||
+		!data.ForceRecreate.Equal(state.ForceRecreate) ||
+		!data.RemoveOrphans.Equal(state.RemoveOrphans)
+
+	if !needsRedeploy {
+		tflog.Debug(ctx, "No deployment-affecting attributes changed, skipping redeploy",
+			map[string]interface{}{
+				"project_id": data.ProjectID.ValueString(),
+			})
+		data.LastDeployedAt = state.LastDeployedAt
+		data.Status = state.Status
+		resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+		return
+	}
+
 	envClient := r.client.ForEnvironment(data.EnvironmentID.ValueString())
 
 	// Redeploy the project
